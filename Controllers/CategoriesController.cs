@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StoreApi.Data;
 using StoreApi.Models;
+using StoreApi.Dtos;
 
 namespace StoreApi.Controllers
 {
@@ -17,10 +18,25 @@ namespace StoreApi.Controllers
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
+		public async Task<ActionResult<IEnumerable<CategoryReadDto>>> GetCategories()
 		{
-			return await _context.Categories.Include(c => c.Products).ToListAsync();
+			return await _context.Categories
+				.Include(c => c.Products)
+				.Select(c => new CategoryReadDto
+				{
+					Id = c.Id,
+					Name = c.Name,
+					Products = c.Products.Select(p => new ProductReadDto
+					{
+						Id = p.Id,
+						Name = p.Name,
+						Price = p.Price,
+						CategoryName = p.Category != null ? p.Category.Name : ""
+					}).ToList()
+				})
+				.ToListAsync();
 		}
+
 
 		[HttpGet("{id}")]
 		public async Task<ActionResult<Category>> GetCategory(int id)
@@ -32,12 +48,26 @@ namespace StoreApi.Controllers
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<Category>> CreateCategory(Category category)
+		public async Task<ActionResult<CategoryReadDto>> CreateCategory(CategoryCreateDto dto)
 		{
+			var category = new Category
+			{
+				Name = dto.Name
+			};
+
 			_context.Categories.Add(category);
 			await _context.SaveChangesAsync();
-			return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, category);
+
+			var result = new CategoryReadDto
+			{
+				Id = category.Id,
+				Name = category.Name,
+				Products = new List<ProductReadDto>() 
+			};
+
+			return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, result);
 		}
+
 
 		[HttpPut("{id}")]
 		public async Task<IActionResult> UpdateCategory(int id, Category category)

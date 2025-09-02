@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StoreApi.Data;
 using StoreApi.Models;
+using StoreApi.Dtos;
 
 namespace StoreApi.Controllers
 {
@@ -17,27 +18,73 @@ namespace StoreApi.Controllers
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+		public async Task<ActionResult<IEnumerable<ProductReadDto>>> GetProducts()
 		{
-			return await _context.Products.Include(p => p.Category).ToListAsync();
+			return await _context.Products
+				.Include(p => p.Category)
+				.Select(p => new ProductReadDto
+				{
+					Id = p.Id,
+					Name = p.Name,
+					Price = p.Price,
+					CategoryName = p.Category != null ? p.Category.Name : ""
+				})
+				.ToListAsync();
 		}
 
+
 		[HttpGet("{id}")]
-		public async Task<ActionResult<Product>> GetProduct(int id)
+		public async Task<ActionResult<ProductReadDto>> GetProduct(int id)
 		{
-			var product = await _context.Products.Include(p => p.Category)
-												 .FirstOrDefaultAsync(p => p.Id == id);
+			var product = await _context.Products
+				.Include(p => p.Category)
+				.Where(p => p.Id == id)
+				.Select(p => new ProductReadDto
+				{
+					Id = p.Id,
+					Name = p.Name,
+					Price = p.Price,
+					CategoryName = p.Category != null ? p.Category.Name : ""
+				})
+				.FirstOrDefaultAsync();
+
 			if (product == null) return NotFound();
+
 			return product;
 		}
 
+
 		[HttpPost]
-		public async Task<ActionResult<Product>> CreateProduct(Product product)
+		public async Task<ActionResult<ProductReadDto>> PostProduct(ProductCreateDto dto)
 		{
+			var category = await _context.Categories.FindAsync(dto.CategoryId);
+			if (category == null)
+			{
+				return BadRequest("Invalid CategoryId");
+			}
+
+			var product = new Product
+			{
+				Name = dto.Name,
+				Price = dto.Price,
+				CategoryId = dto.CategoryId,
+				Category = category
+			};
+
 			_context.Products.Add(product);
 			await _context.SaveChangesAsync();
-			return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
+
+			var result = new ProductReadDto
+			{
+				Id = product.Id,
+				Name = product.Name,
+				Price = product.Price,
+				CategoryName = category.Name
+			};
+
+			return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, result);
 		}
+
 
 		[HttpPut("{id}")]
 		public async Task<IActionResult> UpdateProduct(int id, Product product)

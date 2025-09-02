@@ -1,11 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace StoreApi.Models
+namespace StoreApi.Dtos
 {
-    public class Product
+    public class ProductCreateDto
     {
-        public int Id { get; set; }
-
         [Required]
         public string Name { get; set; } = string.Empty;
 
@@ -14,7 +12,5 @@ namespace StoreApi.Models
 
         [Required]
         public int CategoryId { get; set; }
-
-        public Category Category { get; set; }
     }
 }
