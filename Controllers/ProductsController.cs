@@ -87,12 +87,45 @@ namespace StoreApp.Controllers
 
 
 		[HttpPut("{id}")]
-		public async Task<IActionResult> UpdateProduct(int id, Product product)
+		public async Task<ActionResult<ProductReadDto>> UpdateProduct(int id, ProductCreateDto dto)
 		{
-			if (id != product.Id) return BadRequest();
-			_context.Entry(product).State = EntityState.Modified;
+			var product = await _context.Products
+				.Include(p => p.Category)
+				.FirstOrDefaultAsync(p => p.Id == id);
+
+			if (product == null) return NotFound();
+
+			// Yeni kategori ID gönderildiyse, kategoriyi kontrol et
+			if (dto.CategoryId != product.CategoryId)
+			{
+				var newCategory = await _context.Categories.FindAsync(dto.CategoryId);
+				if (newCategory == null)
+				{
+					return BadRequest("Invalid CategoryId");
+				}
+				product.Category = newCategory;
+				product.CategoryId = dto.CategoryId;
+			}
+
+			if (!string.IsNullOrEmpty(dto.Name))
+			{
+				product.Name = dto.Name;
+			}
+
+			if (dto.Price > 0)
+			{
+				product.Price = dto.Price;
+			}
+
 			await _context.SaveChangesAsync();
-			return NoContent();
+
+			return new ProductReadDto
+			{
+				Id = product.Id,
+				Name = product.Name,
+				Price = product.Price,
+				CategoryName = product.Category?.Name ?? ""
+			};
 		}
 
 		[HttpDelete("{id}")]
