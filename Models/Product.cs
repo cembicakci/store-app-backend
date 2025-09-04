@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace StoreApi.Models
+namespace StoreApp.Models
 {
     public class Product
     {
@@ -15,6 +15,6 @@ namespace StoreApi.Models
         [Required]
         public int CategoryId { get; set; }
 
-        public Category Category { get; set; }
+        public required Category Category { get; set; }
     }
 }

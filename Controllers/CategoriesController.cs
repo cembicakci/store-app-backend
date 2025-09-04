@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using StoreApi.Data;
-using StoreApi.Models;
-using StoreApi.Dtos;
+using StoreApp.Dtos;
+using StoreApp.Data;
+using StoreApp.Models;
 
-namespace StoreApi.Controllers
+namespace StoreApp.Controllers
 {
 	[ApiController]
 	[Route("api/[controller]")]
@@ -39,12 +39,26 @@ namespace StoreApi.Controllers
 
 
 		[HttpGet("{id}")]
-		public async Task<ActionResult<Category>> GetCategory(int id)
+		public async Task<ActionResult<CategoryReadDto>> GetCategory(int id)
 		{
-			var category = await _context.Categories.Include(c => c.Products)
-													.FirstOrDefaultAsync(c => c.Id == id);
+			var category = await _context.Categories
+				.Include(c => c.Products)
+				.FirstOrDefaultAsync(c => c.Id == id);
+
 			if (category == null) return NotFound();
-			return category;
+
+			return new CategoryReadDto
+			{
+				Id = category.Id,
+				Name = category.Name,
+				Products = category.Products.Select(p => new ProductReadDto
+				{
+					Id = p.Id,
+					Name = p.Name,
+					Price = p.Price,
+					CategoryName = category.Name
+				}).ToList()
+			};
 		}
 
 		[HttpPost]
@@ -70,12 +84,29 @@ namespace StoreApi.Controllers
 
 
 		[HttpPut("{id}")]
-		public async Task<IActionResult> UpdateCategory(int id, Category category)
+		public async Task<ActionResult<CategoryReadDto>> UpdateCategory(int id, CategoryCreateDto dto)
 		{
-			if (id != category.Id) return BadRequest();
-			_context.Entry(category).State = EntityState.Modified;
+			var category = await _context.Categories
+				.Include(c => c.Products)
+				.FirstOrDefaultAsync(c => c.Id == id);
+
+			if (category == null) return NotFound();
+
+			category.Name = dto.Name;
 			await _context.SaveChangesAsync();
-			return NoContent();
+
+			return new CategoryReadDto
+			{
+				Id = category.Id,
+				Name = category.Name,
+				Products = category.Products.Select(p => new ProductReadDto
+				{
+					Id = p.Id,
+					Name = p.Name,
+					Price = p.Price,
+					CategoryName = category.Name
+				}).ToList()
+			};
 		}
 
 		[HttpDelete("{id}")]

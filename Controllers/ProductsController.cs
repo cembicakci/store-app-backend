@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using StoreApi.Data;
-using StoreApi.Models;
-using StoreApi.Dtos;
+using StoreApp.Data;
+using StoreApp.Models;
+using StoreApp.Dtos;
 
-namespace StoreApi.Controllers
+namespace StoreApp.Controllers
 {
 	[ApiController]
 	[Route("api/[controller]")]
