@@ -3,9 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using StoreApp.Dtos;
 using StoreApp.Data;
 using StoreApp.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace StoreApp.Controllers
 {
+	[Authorize]
 	[ApiController]
 	[Route("api/[controller]")]
 	public class CategoriesController : ControllerBase

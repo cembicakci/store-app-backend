@@ -3,9 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using StoreApp.Data;
 using StoreApp.Models;
 using StoreApp.Dtos;
+using Microsoft.AspNetCore.Authorization;
 
 namespace StoreApp.Controllers
 {
+	[Authorize]
 	[ApiController]
 	[Route("api/[controller]")]
 	public class ProductsController : ControllerBase
